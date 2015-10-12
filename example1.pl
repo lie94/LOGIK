@@ -1,0 +1,15 @@
+% En lista av premisser (vanstra delen av sekventen.)
+[neg(neg(imp(p, neg(p))))].
+% Malet (hogra delen av sekventen).
+neg(p).
+% Beviset
+[
+	[1, neg(neg(imp(p,neg(p)))),           premise    ],
+	[2, imp(p, neg(p)),                    negnegel(1)],
+	[
+		[3, p,                               assumption ],
+		[4, neg(p),                          impel(3,2) ],
+		[5, cont,                            negel(3,4) ]
+	],
+	[6, neg(p),                            negint(3,5)]
+].
