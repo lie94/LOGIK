@@ -11,7 +11,6 @@ verify(Input):-
 valid_proof(Prems, Goal, Proof):-
 	iter_proof(Prems, Goal, Proof, false,Proof),
 	!.
-
 iter_proof(_,Goal,[[_,X,_]|[]],IsInBox,_):-
 	not(IsInBox),
 	!,
@@ -33,7 +32,7 @@ iter_proof(Prems, Goal, [H|Tail], IsInBox, StaticProof):-
 	!,
 	iter_proof(Prems, Goal, Tail, IsInBox, StaticProof).
 
-isBox([[_|_]|_]).
+isBox([[_|_]|_]).1
 
 getStatement(L, [[L,X,_]|_], X):- !.
 
@@ -61,15 +60,14 @@ assertRule([_,and(X,Y),andint(N1,N2)],_,StaticProof):-
 	getStatement(N2,StaticProof,Y).
 
 assertRule([_,X,andel1(N)],_,StaticProof):-
-	getStatement(N1,StaticProof,and(X,_)).
+	getStatement(N,StaticProof,and(X,_)).
 
 assertRule([_,X,andel2(N)],_,StaticProof):-
-	getStatement(N1,StaticProof,and(_,X)).
+	getStatement(N,StaticProof,and(_,X)).
 
 assertRule([_,X,negnegel(N)],_,StaticProof):-
 	getStatement(N,StaticProof,neg(neg(S))),
 	X = S.
-
 assertRule([_,X,impel(N1,N2)],_,StaticProof):-
 	getStatement(N1,StaticProof,S1),
 	getStatement(N2,StaticProof,imp(S1,X)).
@@ -81,14 +79,26 @@ assertRule([_,neg(X),negint(N1,N2)],_,StaticProof):-
 	getStatement(N1,StaticProof,X).
 assertRule([_,or(X,neg(X)),lem],_,_).
 
-/*
-orint1(x).
-orint2(x).
-orel(x,y,u,v,w).
-impint(x,y).
-negel(x,y).
-contel(x).s
-nenegint(x).
-negnegel(x).
-mt(x,y).
-pbc(x,y).*/
+assertRule([_,or(X,_),orint1(N)],_,StaticProof):-
+	getStatement(N,StaticProof,X).
+assertRule([_,or(_,X),orint1(N)],_,StaticProof):-
+	getStatement(N,StaticProof,X).
+assertRule([_,Z,orel(N,N1,N2,M1,M2)],_,StaticProof):-
+	getStatement(N,StaticProof,or(X,Y)),
+	getStatement(N1,StaticProof,X),
+	getStatement(N2,StaticProof,Z),
+	getStatement(M1,StaticProof,Y),
+	getStatement(M2,StaticProof,Z).
+assertRule([_,imp(X,Y),impint(N1,N2)],_,StaticProof):-
+	getStatement(N1,StaticProof,X),
+	getStatement(N2,StaticProof,Y).
+assertRule([_,_,contel(N)],_,StaticProof):-
+	getStatement(N,StaticProof,cont).
+assertRule([_,neg(neg(X)),negnegint(N)],_,StaticProof):-
+	getStatement(N,StaticProof,X).
+assertRule([_,neg(X),mt(N,M)],_,StaticProof):-
+	getStatement(N,StaticProof,imp(X,Y)),
+	getStatement(M,StaticProof,neg(Y)).
+assertRule([_,X,pcb(N1,N2)],_,StaticProof):-
+	getStatement(N1,StaticProof,neg(X)),
+	getStatement(N2,StaticProof,cont).
