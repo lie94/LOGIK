@@ -40,33 +40,49 @@ isBox([[_|_]|_]).
 % L1 är den som försöker hämta information från L2
 checkLines(L1,L2,StaticProof):-
 	L1 > L2,
-	lineIdentifier(L1,L2,StaticProof).
+	targetLine(L1,L2,StaticProof).%Hitta L2
 
 targetLine(_,_,[]):- !,false.
+%Hittad L2 fortsätt till caller
 targetLine(L1,L2,[[L2,_,_]|Tail]):-
 	callerLine(L1,Tail).
 
-targetLine(L1,L2,[[_,_,_]|Tail]):-
-	!,
-	targetLine(L1,L2,Tail).
+%Inte l2 fortsätt leta
 targetLine(L1,L2,[H|Tail]):-
+	not(isBox(H)),
 	!,
-	targetLine(L1,L2,H);
+	targetLine(L1,L2,Tail).
+%Kolla i box sen efter box
+targetLine(L1,L2,[H|_]):-
+	isBox(H),
+	targetLine(L1,L2,H).
+targetLine(L1,L2,[H|Tail]):-
+	isBox(H),
+	!,
 	targetLine(L1,L2,Tail).
 
-callerLine(_,[]):- false.
+%Tom tail betyder att caller ej finns
+callerLine(_,[]):- !, false.
+%Hittad caller då är det sunt
 callerLine(L1,[[L1,_,_]|_]).
-callerLine(L1,[[_,_,_]|Tail]):-
-	callerLine(L1,Tail).
+%Ej hittad fortsätt
 callerLine(L1,[H|Tail]):-
+	not(isBox(H)),
 	!,
-	callerLine(L1,H);
+	callerLine(L1,Tail).
+%Ny box leta i den sen efter den
+callerLine(L1,[H|_]):-
+	isBox(H),
+	callerLine(L1,H).
+callerLine(L1,[H|Tail]):-
+	isBox(H),
+	!,
 	callerLine(L1,Tail).
 
-getStatement(L, [], _):- false.
+getStatement(_, [], _):- false.
 getStatement(L, [[L,X,_]|_], X):- !.
 % Man kan hämta från lådor som man inte har tillåtelse för att hämta ifrån
-getStatement(L, [H|Tail],X):-
+getStatement(L, [H|_],X):-
 	isBox(H),
 	getStatement(L,H,X).
 getStatement(L, [H|Tail], X):-
@@ -77,52 +93,83 @@ getStatement(Line, [_|Tail], Statement):-
 	!,
 	getStatement(Line,Tail, Statement).
 
+startOfBox(_,_).
+/*startOfBox(L,[[L,_,_]|_]|Tail]).
+startOfBox(L,[H|Tail]):-
+	isBox(H),
+	!,
+	startOfBox(L,Tail).
+startOfBox(L,[_|Tail]):-
+	startOfBox(L,Tail).*/
 assertRule([_,X,premise],Prems,_):-
 	member(X,Prems).
-assertRule([_,_,assumption],_,_).
-assertRule([_,X,copy(N)],_,StaticProof):-
+assertRule([L,_,assumption],_,StaticProof):-
+	startOfBox(L,StaticProof).
+
+assertRule([L,X,copy(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,S),
 	X = S.
-assertRule([_,and(X,Y),andint(N1,N2)],_,StaticProof):-
+assertRule([L,and(X,Y),andint(N1,N2)],_,StaticProof):-
+	checkLines(L,N1,StaticProof),
+	checkLines(L,N2,StaticProof),
 	getStatement(N1,StaticProof,X),
 	getStatement(N2,StaticProof,Y).
-assertRule([_,X,andel1(N)],_,StaticProof):-
+assertRule([L,X,andel1(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,and(X,_)).
-assertRule([_,X,andel2(N)],_,StaticProof):-
+assertRule([L,X,andel2(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,and(_,X)).
-assertRule([_,X,negnegel(N)],_,StaticProof):-
+assertRule([L,X,negnegel(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,neg(neg(S))),
 	X = S.
-assertRule([_,X,impel(N1,N2)],_,StaticProof):-
+assertRule([L,X,impel(N1,N2)],_,StaticProof):-
+	checkLines(L,N1,StaticProof),
+	checkLines(L,N2,StaticProof),
 	getStatement(N1,StaticProof,S1),
 	getStatement(N2,StaticProof,imp(S1,X)).
-assertRule([_,cont,negel(N1,N2)],_,StaticProof):-
+assertRule([L,cont,negel(N1,N2)],_,StaticProof):-
+	checkLines(L,N1,StaticProof),
+	checkLines(L,N2,StaticProof),
 	getStatement(N1,StaticProof,S1),
 	getStatement(N2,StaticProof,neg(S1)).
+%TODO
 assertRule([_,neg(X),negint(N1,N2)],_,StaticProof):-
 	getStatement(N2,StaticProof,cont),
 	getStatement(N1,StaticProof,X).
 assertRule([_,or(X,neg(X)),lem],_,_).	
-assertRule([_,or(X,_),orint1(N)],_,StaticProof):-
+assertRule([L,or(X,_),orint1(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,X).
-assertRule([_,or(_,X),orint1(N)],_,StaticProof):-
+assertRule([L,or(_,X),orint2(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,X).
-assertRule([_,Z,orel(N,N1,N2,M1,M2)],_,StaticProof):-
+%TODO
+assertRule([L,Z,orel(N,N1,N2,M1,M2)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,or(X,Y)),
 	getStatement(N1,StaticProof,X),
 	getStatement(N2,StaticProof,Z),
 	getStatement(M1,StaticProof,Y),
 	getStatement(M2,StaticProof,Z).
+%TODO
 assertRule([_,imp(X,Y),impint(N1,N2)],_,StaticProof):-
 	getStatement(N1,StaticProof,X),
 	getStatement(N2,StaticProof,Y).
-assertRule([_,_,contel(N)],_,StaticProof):-
+assertRule([L,_,contel(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,cont).
-assertRule([_,neg(neg(X)),negnegint(N)],_,StaticProof):-
+assertRule([L,neg(neg(X)),negnegint(N)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
 	getStatement(N,StaticProof,X).
-assertRule([_,neg(X),mt(N,M)],_,StaticProof):-
+assertRule([L,neg(X),mt(N,M)],_,StaticProof):-
+	checkLines(L,N,StaticProof),
+	checkLines(L,M,StaticProof),
 	getStatement(N,StaticProof,imp(X,Y)),
 	getStatement(M,StaticProof,neg(Y)).
-assertRule([_,X,pcb(N1,N2)],_,StaticProof):-
+%TODO
+assertRule([_,X,pbc(N1,N2)],_,StaticProof):-
 	getStatement(N1,StaticProof,neg(X)),
 	getStatement(N2,StaticProof,cont).
