@@ -1,4 +1,4 @@
-% Regler
+% Input returnerar sant om input är sunt
 verify(Input):-
 	see(Input),
 	read(Prems),
@@ -8,24 +8,28 @@ verify(Input):-
 	!,
 	valid_proof(Prems, Goal, Proof).
 
+%Valider checkar beviset utifron premisserna
 valid_proof(Prems, Goal, Proof):-
 	iter_proof(Prems, Goal, Proof, false,Proof),
 	!.
+%Om beviset slutar på ett assumption
 iter_proof(_,_,[[_,_,assumption]|[]],IsInBox,_):- 
 	not(IsInBox),
 	!, 
 	false.
-
+%När vi kommit till slutet skall statment var lika med Goal
 iter_proof(Prems,Goal,[H|[]],IsInBox,StaticProof):-
 	not(IsInBox),
 	assertRule(H,Prems,StaticProof),
 	!,
 	H = [_,X,_],
 	Goal = X.
+%När vi nått slutet av en box (inte slutet av beviset)
 iter_proof(Prems,_,[H|[]],true,StaticProof):-
 	not(isBox(H)),
 	!,
 	assertRule(H,Prems,StaticProof).
+%Validera rad och sen fortsätt
 iter_proof(Prems, Goal, [ H	|Tail], IsInBox, StaticProof):-
 	not(isBox(H)),
 	!,
@@ -41,13 +45,12 @@ iter_proof(Prems, Goal, [H|Tail], IsInBox, StaticProof):-
 	!,
 	iter_proof(Prems, Goal, Tail, IsInBox, StaticProof).
 
+%Sant om atomen är en box
 isBox([[_|_]|_]).
-
+%Check om detta statement är ett assumption
 isAssumtion([[_,_,assumption]|_]).
-%isAssumtion([[1,_,_]|_]).
 
-% L1 är den som försöker hämta information från L2
-%checkLines:- !, true.
+% Får L1 hämta info från L2
 checkLines(L1,L2,StaticProof):-
 	L1 > L2,
 	targetLine(L1,L2,StaticProof).%Hitta L2
@@ -57,7 +60,7 @@ targetLine(_,_,[]):- !,false.
 targetLine(L1,L2,[[L2,_,_]|Tail]):-
 	callerLine(L1,Tail).
 
-%Inte l2 fortsätt leta
+%Inte L2 fortsätt leta
 targetLine(L1,L2,[H|Tail]):-
 	not(isBox(H)),
 	!,
@@ -88,24 +91,30 @@ callerLine(L1,[H|Tail]):-
 	!,
 	callerLine(L1,Tail).
 
+%Letar efter statement på rad L
+
 getStatement(_, [], _):- false.
+%Statement hittad då är det klart
 getStatement(L, [[L,X,_]|_], X):- !.
-% Man kan hämta från lådor som man inte har tillåtelse för att hämta ifrån
+%Om vi är på en box kolla genom boxen sen efter
 getStatement(L, [H|_],X):-
 	isBox(H),
 	getStatement(L,H,X).
 getStatement(L, [H|Tail], X):-
 	isBox(H),
 	getStatement(L,Tail,X).
-
+%Ej hittad fortsätt
 getStatement(Line, [_|Tail], Statement):-
 	!,
 	getStatement(Line,Tail, Statement).
 
-%startOfBox(_,_).
+%Kollar i fall L är start på box.
+
+%Hittad L i början a box
 startOfBox(L,[H|_]):-
 	isBox(H),
 	H = [[L,_,_]|_].
+%Hittade box (ej rätt) titta igenom den sen efter den
 startOfBox(L,[H|_]):-
 	isBox(H),
 	startOfBox(L,H).
@@ -113,28 +122,34 @@ startOfBox(L,[H|Tail]):-
 	isBox(H),
 	!,
 	startOfBox(L,Tail).
+%Ej hittad fortsätt
 startOfBox(L,[_|Tail]):-
 	!,
 	startOfBox(L,Tail).
 
-% L1 caller
-% L2 target
+%Får L1 dra slutsatsen får boxen L2
+%Har L2 endast en högre level en L1
 levelDifferanceAllowed(L1,L2,StaticProof):-
 	getLevel(L1,0,Level1,StaticProof),
 	getLevel(L2,0,Level2,StaticProof),
-	1 is Level2 - Level1. 
+	1 is Level2 - Level1.
+%L hittad
 getLevel(L,LevelCounter,Level,[[L,_,_]|_]):-
 	Level = LevelCounter.
+%Vi är i box öka level
 getLevel(L,LevelCounter,Level,[H|_]):-
 	isBox(H),
 	getLevel(L,LevelCounter + 1, Level, H).
+%Fortsätt leta efterboxen
 getLevel(L,LevelCounter,Level,[H|Tail]):-
 	isBox(H),
 	!,
 	getLevel(L,LevelCounter, Level, Tail).
+%Ej hittad fortsätt
 getLevel(L,LevelCounter,Level, [_|Tail]):-
 	getLevel(L,LevelCounter, Level, Tail).
 
+%Validerar varje rad
 
 assertRule([_,X,premise],Prems,_):-
 	member(X,Prems).
