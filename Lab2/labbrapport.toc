@@ -1,0 +1,12 @@
+\select@language {swedish}
+\contentsline {section}{\numberline {1}Inledning}{1}
+\contentsline {subsection}{\numberline {1.1}Fr\IeC {\r a}gest\IeC {\"a}llning}{1}
+\contentsline {section}{\numberline {2}Metod}{1}
+\contentsline {section}{\numberline {3}Resultat}{1}
+\contentsline {subsection}{\numberline {3.1}Algoritmbeskrivning}{1}
+\contentsline {subsection}{\numberline {3.2}Ospecificerat antal indata}{2}
+\contentsline {subsection}{\numberline {3.3}Predikat}{2}
+\contentsline {section}{\numberline {4}Appendix A - Mastermind Modell}{3}
+\contentsline {subsection}{\numberline {4.1}Valid CTL formel}{3}
+\contentsline {subsection}{\numberline {4.2}Icke-valid CTL formel}{3}
+\contentsline {subsection}{\numberline {4.3}Appendix B - Kod}{3}
