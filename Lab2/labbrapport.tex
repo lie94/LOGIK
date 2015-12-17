@@ -74,7 +74,7 @@ Oavsätt vilket tillstånd du är i kan du ta dig till Win eller Lose. Detta är
 \subsection{Icke-valid CTL formel}
 $$AG (View \lor EX(Win))$$
 Antingen är man på ett tillstånd med View-egenskapen, eller så kan man ta sig till Win nästa drag. Detta betyder att man antingen kollar på sina tidigare gissningar, eller så kan man vinna inom nästa drag. Detta stämmer faktiskt för alla tillstånd i modellen, förutom ett, när man är i Lose tillståndet. Då är man inte på view tillståndet och man kan icke ta sig till Win. 
-\subsection{Appendix B - Kod}
+\section{Appendix B - Kod}
 \begin{verbatim}
 % For SICStus, uncomment line below: (needed for member/2)
 %:- use_module(library(lists)).
