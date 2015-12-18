@@ -1,5 +1,4 @@
-% For SICStus, uncomment line below: (needed for member/2)
-%:- use_module(library(lists)).
+% Authors: Felix Hedenström and Jonathan Rinnarv
 % Load model, initial state and formula from file.
 verify(Input) :-
 	see(Input), read(T), read(L), read(S), read(F), seen,
